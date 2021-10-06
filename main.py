@@ -1,5 +1,5 @@
 import pygame
-import random
+from random import randrange as rnd
 
 pygame.init()
 
@@ -20,6 +20,26 @@ img = pygame.transform.scale(img, (1200, 800))
 img_y = 0
 scroll_value = 1
 
+
+def detect_collision(dx, dy, ball, rect):
+    if dx > 0:
+        delta_x = ball.right - rect.left
+    else:
+        delta_x = rect.right - ball.left
+    if dy > 0:
+        delta_y = ball.bottom - rect.top
+    else:
+        delta_y = rect.bottom - ball.top
+
+    if abs(delta_x - delta_y) < 10:
+        dx, dy = -dx, -dy
+    elif delta_x > delta_y:
+        dx = -dx
+    elif delta_y > delta_x:
+        dx = -dx
+    return dx, dy
+
+
 # Paddle Settings
 paddle_width = 300
 paddle_height = 30
@@ -31,8 +51,12 @@ paddle = pygame.Rect(SCREEN_WIDTH / 2 - paddle_width / 2, SCREEN_HEIGHT - paddle
 ball_radius = 15
 ball_speed = 5
 ball_rect = int(ball_radius * 2 ** 0.5)
-ball = pygame.Rect(random.randrange(ball_rect, SCREEN_WIDTH - ball_rect), SCREEN_HEIGHT // 2, ball_rect, ball_rect)
+ball = pygame.Rect(rnd(ball_rect, SCREEN_WIDTH - ball_rect), SCREEN_HEIGHT // 2, ball_rect, ball_rect)
 dx, dy = 1, -1
+
+# Blocks settings
+block_list = [pygame.Rect(10 + 120 * i, 10 + 70 * j, 100, 50) for i in range(10) for j in range(4)]
+color_list = [(rnd(30, 256), rnd(30, 256), rnd(30, 256)) for i in range(10) for j in range(4)]
 
 # Main game loop
 active = True
@@ -49,6 +73,7 @@ while active:
     if scroll_value >= SCREEN_HEIGHT:
         scroll_value = 1
 
+    [pygame.draw.rect(sc, color_list[color], block) for color, block in enumerate(block_list)]
     pygame.draw.rect(sc, YELLOW, paddle)
     pygame.draw.circle(sc, WHITE, ball.center, ball_radius)
 
@@ -72,7 +97,20 @@ while active:
 
     # Ball Collision Paddle from Top
     if ball.colliderect(paddle) and dy > 0:
+        # dx, dy = detect_collision(dx, dy, ball, paddle)
         dy = -dy
 
+    # Blocks Collision
+    hit_index = ball.collidelist(block_list)
+    if hit_index != -1:
+        hit_rect = block_list.pop(hit_index)
+        hit_color = color_list.pop(hit_index)
+        dx, dy = detect_collision(dx, dy, ball, hit_rect)
+        # Effect on collision
+        hit_rect.inflate_ip(ball.width * 3, ball.height * 3)
+        pygame.draw.rect(sc, hit_color, hit_rect)
+        FPS += 2
+
+    print(FPS)
     pygame.display.update()
     clock.tick(FPS)
