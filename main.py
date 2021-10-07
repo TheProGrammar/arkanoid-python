@@ -6,16 +6,16 @@ pygame.init()
 # Screen settings
 SCREEN_WIDTH, SCREEN_HEIGHT = 1200, 800
 sc = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("Arcanoid")
+pygame.display.set_caption("Arkanoid")
 clock = pygame.time.Clock()
-FPS = 60
+FPS = 80
 
 # Colors
 YELLOW = (255, 213, 113)
 WHITE = (255, 255, 255)
 
 # Background image settings
-img = pygame.image.load("1.png")
+img = pygame.image.load("1.png").convert()
 img = pygame.transform.scale(img, (1200, 800))
 img_y = 0
 scroll_value = 1
@@ -34,7 +34,7 @@ def detect_collision(dx, dy, ball, rect):
     if abs(delta_x - delta_y) < 10:
         dx, dy = -dx, -dy
     elif delta_x > delta_y:
-        dx = -dx
+        dy = -dy
     elif delta_y > delta_x:
         dx = -dx
     return dx, dy
@@ -55,7 +55,7 @@ ball = pygame.Rect(rnd(ball_rect, SCREEN_WIDTH - ball_rect), SCREEN_HEIGHT // 2,
 dx, dy = 1, -1
 
 # Blocks settings
-block_list = [pygame.Rect(10 + 120 * i, 10 + 70 * j, 100, 50) for i in range(10) for j in range(4)]
+block_list = [pygame.Rect(5 + 120 * i, 5 + 70 * j, 110, 60) for i in range(10) for j in range(4)]
 color_list = [(rnd(30, 256), rnd(30, 256), rnd(30, 256)) for i in range(10) for j in range(4)]
 
 # Main game loop
@@ -98,7 +98,7 @@ while active:
     # Ball Collision Paddle from Top
     if ball.colliderect(paddle) and dy > 0:
         # dx, dy = detect_collision(dx, dy, ball, paddle)
-        dy = -dy
+        dx, dy = detect_collision(dx, dy, ball, paddle)
 
     # Blocks Collision
     hit_index = ball.collidelist(block_list)
@@ -107,10 +107,9 @@ while active:
         hit_color = color_list.pop(hit_index)
         dx, dy = detect_collision(dx, dy, ball, hit_rect)
         # Effect on collision
-        hit_rect.inflate_ip(ball.width * 3, ball.height * 3)
+        hit_rect.inflate_ip(ball.width * 5, ball.height * 5)
         pygame.draw.rect(sc, hit_color, hit_rect)
         FPS += 2
 
-    print(FPS)
     pygame.display.update()
     clock.tick(FPS)
